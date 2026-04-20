@@ -1,6 +1,6 @@
 # pi-moonshot-provider
 
-A [pi](https://github.com/badlogic/pi) extension that registers [Moonshot AI](https://www.moonshot.ai/) as a custom provider. Access Kimi K2.6, K2.5, K2 Thinking, and Moonshot V1 models through a unified OpenAI-compatible API.
+A [pi](https://github.com/badlogic/pi-mono) extension that registers [Moonshot AI](https://www.moonshot.ai/) as a custom provider. Access Kimi K2.6, K2.5, K2 Thinking, and Moonshot V1 models through a unified OpenAI-compatible API.
 
 ## Features
 
