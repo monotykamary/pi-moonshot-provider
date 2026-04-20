@@ -20,7 +20,7 @@ A [pi](https://github.com/badlogic/pi) extension that registers [Moonshot AI](ht
 Install directly from GitHub:
 
 ```bash
-pi install git:github.com/default-anton/pi-moonshot-provider
+pi install git:github.com/monotykamary/pi-moonshot-provider
 ```
 
 Then set your API key and run pi:
@@ -35,7 +35,7 @@ Get your API key at [platform.kimi.ai/console/api-keys](https://platform.kimi.ai
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/default-anton/pi-moonshot-provider.git
+   git clone https://github.com/monotykamary/pi-moonshot-provider.git
    cd pi-moonshot-provider
    ```
 
