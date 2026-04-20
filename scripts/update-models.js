@@ -1,0 +1,336 @@
+#!/usr/bin/env node
+/**
+ * Update Moonshot models from API
+ *
+ * Fetches models from https://api.moonshot.ai/v1/models and updates:
+ * - models.json: Provider model definitions (enriched with pricing & compat)
+ * - README.md: Model table in the Available Models section
+ *
+ * The Moonshot /v1/models API returns basic model info (id, context_length,
+ * supports_image_in, supports_reasoning) but does NOT include pricing.
+ * Pricing is maintained in the existing models.json and carried forward
+ * for known models. New models get default pricing that must be manually
+ * updated in patch.json.
+ *
+ * Requires MOONSHOT_API_KEY environment variable.
+ */
+
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const MODELS_API_URL = 'https://api.moonshot.ai/v1/models';
+const MODELS_JSON_PATH = path.join(__dirname, '..', 'models.json');
+const README_PATH = path.join(__dirname, '..', 'README.md');
+const PATCH_PATH = path.join(__dirname, '..', 'patch.json');
+
+// ─── Pricing defaults per model family ──────────────────────────────────────
+// When a new model appears from the API that we don't have pricing for,
+// we assign a default based on its family. Update patch.json with actuals.
+const PRICING_DEFAULTS = {
+  'kimi-k2.6':              { input: 0.95, output: 4.0, cacheRead: 0.16 },
+  'kimi-k2.5':              { input: 0.6,  output: 3.0, cacheRead: 0.1 },
+  'kimi-k2-thinking':       { input: 0.6,  output: 2.5, cacheRead: 0.15 },
+  'kimi-k2-thinking-turbo': { input: 1.15, output: 8.0, cacheRead: 0.15 },
+  'kimi-k2-turbo-preview':  { input: 1.15, output: 8.0, cacheRead: 0.15 },
+  'kimi-k2-0905-preview':   { input: 0.6,  output: 2.2, cacheRead: 0.15 },
+  'kimi-k2-0711-preview':   { input: 0.55, output: 2.2, cacheRead: 0.3 },
+  'moonshot-v1-8k':         { input: 0.2,  output: 2.0, cacheRead: 0.2 },
+  'moonshot-v1-32k':        { input: 1.0,  output: 3.0, cacheRead: 1.0 },
+  'moonshot-v1-128k':       { input: 2.0,  output: 5.0, cacheRead: 2.0 },
+};
+
+// Default pricing for unknown models
+const DEFAULT_PRICING = { input: 0.6, output: 3.0, cacheRead: 0.15 };
+
+// Default max output tokens per model family
+const MAX_TOKENS_DEFAULTS = {
+  'kimi-k2.6':              32768,
+  'kimi-k2.5':              32768,
+  'kimi-k2-thinking':       32768,
+  'kimi-k2-thinking-turbo': 32768,
+  'kimi-k2-turbo-preview':  32768,
+  'kimi-k2-0905-preview':   32768,
+  'kimi-k2-0711-preview':   16384,
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function loadJson(filePath) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+function saveJson(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n');
+  console.log(`✓ Saved ${path.basename(filePath)}`);
+}
+
+// ─── API fetch ───────────────────────────────────────────────────────────────
+
+async function fetchModels() {
+  const apiKey = process.env.MOONSHOT_API_KEY;
+  if (!apiKey) {
+    throw new Error('MOONSHOT_API_KEY environment variable is required');
+  }
+
+  console.log(`Fetching models from ${MODELS_API_URL}...`);
+  const response = await fetch(MODELS_API_URL, {
+    headers: { 'Authorization': `Bearer ${apiKey}` },
+  });
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  const models = data.data || [];
+  console.log(`✓ Fetched ${models.length} models from API`);
+  return models;
+}
+
+// ─── Transform API model → models.json entry ────────────────────────────────
+
+function transformApiModel(apiModel, existingModelsMap, patch) {
+  const id = apiModel.id;
+
+  // Start from existing model data if we have it (preserves pricing, compat, etc.)
+  if (existingModelsMap[id]) {
+    const existing = { ...existingModelsMap[id] };
+    // Update context window from API if changed
+    if (apiModel.context_length) {
+      existing.contextWindow = apiModel.context_length;
+    }
+    // Update reasoning/vision flags from API
+    existing.reasoning = apiModel.supports_reasoning ?? existing.reasoning;
+    if (apiModel.supports_image_in) {
+      if (!existing.input.includes('image')) {
+        existing.input = ['text', 'image'];
+      }
+    }
+    return existing;
+  }
+
+  // New model — build from API data + defaults
+  const inputTypes = ['text'];
+  if (apiModel.supports_image_in) {
+    inputTypes.push('image');
+  }
+
+  const pricing = PRICING_DEFAULTS[id] || DEFAULT_PRICING;
+  const maxTokens = MAX_TOKENS_DEFAULTS[id] || apiModel.context_length || 131072;
+
+  const model = {
+    id,
+    name: generateDisplayName(id),
+    reasoning: apiModel.supports_reasoning || false,
+    input: inputTypes,
+    cost: {
+      input: pricing.input,
+      output: pricing.output,
+      cacheRead: pricing.cacheRead,
+      cacheWrite: 0,
+    },
+    contextWindow: apiModel.context_length || 131072,
+    maxTokens,
+  };
+
+  // Add compat for reasoning models
+  if (model.reasoning) {
+    model.compat = {
+      thinkingFormat: 'zai',
+      maxTokensField: 'max_tokens',
+      supportsDeveloperRole: false,
+      supportsStore: false,
+    };
+  } else {
+    model.compat = {
+      maxTokensField: 'max_tokens',
+      supportsDeveloperRole: false,
+      supportsStore: false,
+    };
+  }
+
+  return model;
+}
+
+function generateDisplayName(id) {
+  // Handle known names first
+  const KNOWN_NAMES = {
+    'kimi-k2.6': 'Kimi K2.6',
+    'kimi-k2.5': 'Kimi K2.5',
+    'kimi-k2-0905-preview': 'Kimi K2 0905 Preview',
+    'kimi-k2-0711-preview': 'Kimi K2 0711 Preview',
+    'kimi-k2-turbo-preview': 'Kimi K2 Turbo',
+    'kimi-k2-thinking': 'Kimi K2 Thinking',
+    'kimi-k2-thinking-turbo': 'Kimi K2 Thinking Turbo',
+    'moonshot-v1-8k': 'Moonshot V1 8K',
+    'moonshot-v1-32k': 'Moonshot V1 32K',
+    'moonshot-v1-128k': 'Moonshot V1 128K',
+  };
+
+  if (KNOWN_NAMES[id]) return KNOWN_NAMES[id];
+
+  // Fallback: prettify the ID
+  return id
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// ─── Apply patch overrides ───────────────────────────────────────────────────
+
+function applyPatch(model, patch) {
+  const overrides = patch[model.id];
+  if (!overrides) return model;
+
+  const merged = { ...model };
+  if (overrides.compat && merged.compat) {
+    merged.compat = { ...merged.compat, ...overrides.compat };
+    delete overrides.compat;
+  }
+  if (overrides.compat) {
+    merged.compat = { ...(merged.compat || {}), ...overrides.compat };
+    delete overrides.compat;
+  }
+  if (overrides.cost) {
+    merged.cost = { ...merged.cost, ...overrides.cost };
+    delete overrides.cost;
+  }
+  Object.assign(merged, overrides);
+
+  // Remove thinkingFormat from non-reasoning models
+  if (!merged.reasoning && merged.compat?.thinkingFormat) {
+    delete merged.compat.thinkingFormat;
+  }
+  if (merged.compat && Object.keys(merged.compat).length === 0) {
+    delete merged.compat;
+  }
+
+  return merged;
+}
+
+// ─── README generation ──────────────────────────────────────────────────────
+
+function formatContext(n) {
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+  if (n >= 1000) return `${Math.round(n / 1000)}K`;
+  return n.toString();
+}
+
+function formatCost(cost) {
+  if (cost === 0) return 'Free';
+  if (cost === null || cost === undefined) return '-';
+  return `$${cost.toFixed(2)}`;
+}
+
+function generateReadmeTable(models) {
+  const lines = [
+    '| Model | Context | Vision | Reasoning | Input $/M | Output $/M | Cache Read $/M |',
+    '|-------|---------|--------|-----------|-----------|------------|----------------|',
+  ];
+
+  for (const model of models) {
+    const context = formatContext(model.contextWindow);
+    const vision = model.input.includes('image') ? '✅' : '❌';
+    const reasoning = model.reasoning ? '✅' : '❌';
+    const inputCost = formatCost(model.cost.input);
+    const outputCost = formatCost(model.cost.output);
+    const cacheCost = formatCost(model.cost.cacheRead);
+
+    lines.push(`| ${model.name} | ${context} | ${vision} | ${reasoning} | ${inputCost} | ${outputCost} | ${cacheCost} |`);
+  }
+
+  return lines.join('\n');
+}
+
+function updateReadme(models) {
+  let readme = fs.readFileSync(README_PATH, 'utf8');
+  const newTable = generateReadmeTable(models);
+
+  const tableRegex = /(## Available Models\n\n)\| Model \|[^\n]+\|\n\|[-| ]+\|(\n\|[^\n]+\|)*\n*/;
+
+  if (tableRegex.test(readme)) {
+    readme = readme.replace(tableRegex, (match, header) => `${header}${newTable}\n\n`);
+    fs.writeFileSync(README_PATH, readme);
+    console.log('✓ Updated README.md');
+  } else {
+    console.warn('⚠ Could not find model table in "## Available Models" section');
+  }
+}
+
+// ─── Main ────────────────────────────────────────────────────────────────────
+
+async function main() {
+  try {
+    const apiModels = await fetchModels();
+
+    // Load existing models.json for pricing/compat preservation
+    const existingModels = loadJson(MODELS_JSON_PATH);
+    const existingModelsMap = {};
+    for (const m of (Array.isArray(existingModels) ? existingModels : [])) {
+      existingModelsMap[m.id] = m;
+    }
+
+    // Load patch overrides
+    const patch = loadJson(PATCH_PATH);
+    console.log(`✓ Loaded patch with ${Object.keys(patch).length} overrides`);
+
+    // Transform API models, preserving existing data where available
+    let models = apiModels.map(m =>
+      transformApiModel(m, existingModelsMap, patch)
+    );
+
+    // Keep models from models.json that are NOT in the API response
+    // (e.g. deprecated but still usable models)
+    const apiIds = new Set(apiModels.map(m => m.id));
+    for (const existing of Object.values(existingModelsMap)) {
+      if (!apiIds.has(existing.id)) {
+        models.push(existing);
+      }
+    }
+
+    // Apply patch overrides
+    models = models.map(m => applyPatch(m, patch));
+
+    // Sort: K2.6 first, then K2.5, then K2 family, then V1
+    const FAMILY_ORDER = ['k2.6', 'k2.5', 'k2-thinking-turbo', 'k2-thinking', 'k2-turbo', 'k2-0905', 'k2-0711', 'v1-128', 'v1-32', 'v1-8'];
+    models.sort((a, b) => {
+      const aIdx = FAMILY_ORDER.findIndex(f => a.id.includes(f));
+      const bIdx = FAMILY_ORDER.findIndex(f => b.id.includes(f));
+      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+      if (aIdx !== -1) return -1;
+      if (bIdx !== -1) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    // Save models.json
+    saveJson(MODELS_JSON_PATH, models);
+
+    // Update README
+    updateReadme(models);
+
+    // Summary
+    const newIds = new Set(models.map(m => m.id));
+    const oldIds = new Set(Object.keys(existingModelsMap));
+    const added = [...newIds].filter(id => !oldIds.has(id));
+    const removed = [...oldIds].filter(id => !newIds.has(id));
+
+    console.log('\n--- Summary ---');
+    console.log(`Total models: ${models.length}`);
+    console.log(`Reasoning models: ${models.filter(m => m.reasoning).length}`);
+    console.log(`Vision models: ${models.filter(m => m.input.includes('image')).length}`);
+    if (added.length > 0) console.log(`New models: ${added.join(', ')}`);
+    if (removed.length > 0) console.log(`Removed models: ${removed.join(', ')}`);
+
+  } catch (error) {
+    console.error('Error:', error.message);
+    process.exit(1);
+  }
+}
+
+main();

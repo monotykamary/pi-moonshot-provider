@@ -1,0 +1,31 @@
+{
+  "name": "pi-moonshot-provider",
+  "version": "1.0.0",
+  "description": "Moonshot AI provider extension for pi - Access Kimi K2.6, K2.5, K2 Thinking, and Moonshot V1 models through the Moonshot API",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "clean": "echo 'nothing to clean'",
+    "build": "echo 'nothing to build'",
+    "check": "echo 'nothing to check'",
+    "update-models": "node scripts/update-models.js"
+  },
+  "keywords": [
+    "pi",
+    "extension",
+    "provider",
+    "moonshot",
+    "moonshot-ai",
+    "ai",
+    "llm",
+    "kimi",
+    "kimi-k2.6"
+  ],
+  "author": "",
+  "license": "MIT",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
