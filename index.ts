@@ -5,7 +5,11 @@
  * Base URL: https://api.moonshot.ai/v1
  *
  * Usage:
- *   # Set your API key
+ *   # Option 1: Store in auth.json (recommended)
+ *   # Add to ~/.pi/agent/auth.json:
+ *   #   "moonshot": { "type": "api_key", "key": "your-api-key" }
+ *
+ *   # Option 2: Set as environment variable
  *   export MOONSHOT_API_KEY=your-api-key
  *
  *   # Run pi with the extension
@@ -14,7 +18,7 @@
  * Then use /model to select from available models
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { AuthStorage, ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import modelsData from "./models.json" with { type: "json" };
 import patchData from "./patch.json" with { type: "json" };
 
@@ -99,7 +103,40 @@ const models = applyPatch(
   patchData as PatchData
 );
 
+// ─── API Key Resolution (via AuthStorage) ────────────────────────────────────
+
+/**
+ * Cached API key resolved from AuthStorage.
+ *
+ * Pi's core resolves the key via AuthStorage.getApiKey() before making requests,
+ * but we also cache it here so we can resolve it in contexts where the resolved
+ * key isn't directly available (e.g. future features like quota fetching) and
+ * to make the AuthStorage dependency explicit.
+ *
+ * Resolution order (via AuthStorage.getApiKey):
+ *   1. Runtime override (CLI --api-key)
+ *   2. auth.json stored credentials (manual entry in ~/.pi/agent/auth.json)
+ *   3. OAuth tokens (auto-refreshed)
+ *   4. Environment variable (MOONSHOT_API_KEY)
+ *   5. Fallback resolver
+ */
+let cachedApiKey: string | undefined;
+
+/**
+ * Resolve the Moonshot API key via AuthStorage and cache the result.
+ * Called on session_start and whenever ctx.modelRegistry.authStorage is available.
+ */
+async function resolveApiKey(authStorage: AuthStorage): Promise<void> {
+  const key = await authStorage.getApiKey("moonshot");
+  cachedApiKey = key ?? process.env.MOONSHOT_API_KEY;
+}
+
 export default function (pi: ExtensionAPI) {
+  // Resolve API key via AuthStorage on session start
+  pi.on("session_start", async (_event, ctx) => {
+    await resolveApiKey(ctx.modelRegistry.authStorage);
+  });
+
   pi.registerProvider("moonshot", {
     baseUrl: "https://api.moonshot.ai/v1",
     apiKey: "MOONSHOT_API_KEY",
