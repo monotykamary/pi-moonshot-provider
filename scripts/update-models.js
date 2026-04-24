@@ -10,7 +10,9 @@
  * supports_image_in, supports_reasoning) but does NOT include pricing.
  * Pricing is maintained in the existing models.json and carried forward
  * for known models. New models get default pricing that must be manually
- * updated in patch.json.
+ * updated in models.json.
+ *
+ * patch.json is applied at runtime by the provider — not baked into models.json.
  *
  * Requires MOONSHOT_API_KEY environment variable.
  */
@@ -24,11 +26,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MODELS_API_URL = 'https://api.moonshot.ai/v1/models';
 const MODELS_JSON_PATH = path.join(__dirname, '..', 'models.json');
 const README_PATH = path.join(__dirname, '..', 'README.md');
-const PATCH_PATH = path.join(__dirname, '..', 'patch.json');
 
 // ─── Pricing defaults per model family ──────────────────────────────────────
 // When a new model appears from the API that we don't have pricing for,
-// we assign a default based on its family. Update patch.json with actuals.
+// we assign a default based on its family. Update models.json with actuals.
 const PRICING_DEFAULTS = {
   'kimi-k2.6':              { input: 0.95, output: 4.0, cacheRead: 0.16 },
   'kimi-k2.5':              { input: 0.6,  output: 3.0, cacheRead: 0.1 },
@@ -96,7 +97,7 @@ async function fetchModels() {
 
 // ─── Transform API model → models.json entry ────────────────────────────────
 
-function transformApiModel(apiModel, existingModelsMap, patch) {
+function transformApiModel(apiModel, existingModelsMap) {
   const id = apiModel.id;
 
   // Start from existing model data if we have it (preserves pricing, compat, etc.)
@@ -182,38 +183,6 @@ function generateDisplayName(id) {
     .replace(/\b\w/g, c => c.toUpperCase());
 }
 
-// ─── Apply patch overrides ───────────────────────────────────────────────────
-
-function applyPatch(model, patch) {
-  const overrides = patch[model.id];
-  if (!overrides) return model;
-
-  const merged = { ...model };
-  if (overrides.compat && merged.compat) {
-    merged.compat = { ...merged.compat, ...overrides.compat };
-    delete overrides.compat;
-  }
-  if (overrides.compat) {
-    merged.compat = { ...(merged.compat || {}), ...overrides.compat };
-    delete overrides.compat;
-  }
-  if (overrides.cost) {
-    merged.cost = { ...merged.cost, ...overrides.cost };
-    delete overrides.cost;
-  }
-  Object.assign(merged, overrides);
-
-  // Remove thinkingFormat from non-reasoning models
-  if (!merged.reasoning && merged.compat?.thinkingFormat) {
-    delete merged.compat.thinkingFormat;
-  }
-  if (merged.compat && Object.keys(merged.compat).length === 0) {
-    delete merged.compat;
-  }
-
-  return merged;
-}
-
 // ─── README generation ──────────────────────────────────────────────────────
 
 function formatContext(n) {
@@ -276,13 +245,9 @@ async function main() {
       existingModelsMap[m.id] = m;
     }
 
-    // Load patch overrides
-    const patch = loadJson(PATCH_PATH);
-    console.log(`✓ Loaded patch with ${Object.keys(patch).length} overrides`);
-
     // Transform API models, preserving existing data where available
     let models = apiModels.map(m =>
-      transformApiModel(m, existingModelsMap, patch)
+      transformApiModel(m, existingModelsMap)
     );
 
     // Keep models from models.json that are NOT in the API response
@@ -293,9 +258,6 @@ async function main() {
         models.push(existing);
       }
     }
-
-    // Apply patch overrides
-    models = models.map(m => applyPatch(m, patch));
 
     // Sort: K2.6 first, then K2.5, then K2 family, then V1
     const FAMILY_ORDER = ['k2.6', 'k2.5', 'k2-thinking-turbo', 'k2-thinking', 'k2-turbo', 'k2-0905', 'k2-0711', 'v1-128', 'v1-32', 'v1-8'];
