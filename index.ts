@@ -216,6 +216,7 @@ export default function (pi: ExtensionAPI) {
         pi.registerProvider("moonshot", {
           baseUrl: BASE_URL,
           apiKey: "MOONSHOT_API_KEY",
+          api: "openai-completions",
           models: applyPatch(freshBase, patchData as PatchData),
         });
       }
