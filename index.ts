@@ -213,7 +213,11 @@ export default function (pi: ExtensionAPI) {
     await resolveApiKey(ctx.modelRegistry);
     revalidateModels(cachedApiKey, embeddedModels).then((freshBase) => {
       if (freshBase) {
-        pi.registerProvider("moonshot", { models: applyPatch(freshBase, patchData as PatchData) });
+        pi.registerProvider("moonshot", {
+          baseUrl: BASE_URL,
+          apiKey: "MOONSHOT_API_KEY",
+          models: applyPatch(freshBase, patchData as PatchData),
+        });
       }
     });
   });
