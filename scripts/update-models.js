@@ -7,10 +7,11 @@
  * - README.md: Model table in the Available Models section
  *
  * The Moonshot /v1/models API returns basic model info (id, context_length,
- * supports_image_in, supports_reasoning) but does NOT include pricing.
- * Pricing is maintained in the existing models.json and carried forward
- * for known models. New models get default pricing that must be manually
- * updated in models.json.
+ * supports_image_in, supports_reasoning) but does NOT include pricing or
+ * max output tokens.
+ * models.json is the source of truth for curated specs — the script preserves
+ * existing data and only adds new models with sensible defaults.
+ * Curate models.json manually after new model discovery.
  *
  * patch.json is applied at runtime by the provider — not baked into models.json.
  *
@@ -26,36 +27,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MODELS_API_URL = 'https://api.moonshot.ai/v1/models';
 const MODELS_JSON_PATH = path.join(__dirname, '..', 'models.json');
 const README_PATH = path.join(__dirname, '..', 'README.md');
-
-// ─── Pricing defaults per model family ──────────────────────────────────────
-// When a new model appears from the API that we don't have pricing for,
-// we assign a default based on its family. Update models.json with actuals.
-const PRICING_DEFAULTS = {
-  'kimi-k2.6':              { input: 0.95, output: 4.0, cacheRead: 0.16 },
-  'kimi-k2.5':              { input: 0.6,  output: 3.0, cacheRead: 0.1 },
-  'kimi-k2-thinking':       { input: 0.6,  output: 2.5, cacheRead: 0.15 },
-  'kimi-k2-thinking-turbo': { input: 1.15, output: 8.0, cacheRead: 0.15 },
-  'kimi-k2-turbo-preview':  { input: 1.15, output: 8.0, cacheRead: 0.15 },
-  'kimi-k2-0905-preview':   { input: 0.6,  output: 2.2, cacheRead: 0.15 },
-  'kimi-k2-0711-preview':   { input: 0.55, output: 2.2, cacheRead: 0.3 },
-  'moonshot-v1-8k':         { input: 0.2,  output: 2.0, cacheRead: 0.2 },
-  'moonshot-v1-32k':        { input: 1.0,  output: 3.0, cacheRead: 1.0 },
-  'moonshot-v1-128k':       { input: 2.0,  output: 5.0, cacheRead: 2.0 },
-};
-
-// Default pricing for unknown models
-const DEFAULT_PRICING = { input: 0.6, output: 3.0, cacheRead: 0.15 };
-
-// Default max output tokens per model family
-const MAX_TOKENS_DEFAULTS = {
-  'kimi-k2.6':              32768,
-  'kimi-k2.5':              32768,
-  'kimi-k2-thinking':       32768,
-  'kimi-k2-thinking-turbo': 32768,
-  'kimi-k2-turbo-preview':  32768,
-  'kimi-k2-0905-preview':   32768,
-  'kimi-k2-0711-preview':   16384,
-};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -100,7 +71,7 @@ async function fetchModels() {
 function transformApiModel(apiModel, existingModelsMap) {
   const id = apiModel.id;
 
-  // Start from existing model data if we have it (preserves pricing, compat, etc.)
+  // Preserve existing curated data (pricing, reasoning, compat, etc.)
   if (existingModelsMap[id]) {
     const existing = { ...existingModelsMap[id] };
     // Update context window from API if changed
@@ -117,14 +88,12 @@ function transformApiModel(apiModel, existingModelsMap) {
     return existing;
   }
 
-  // New model — build from API data + defaults
+  // New model — build from API data + sensible defaults
+  // Curate models.json manually after discovery for pricing, maxTokens, thinkingFormat, etc.
   const inputTypes = ['text'];
   if (apiModel.supports_image_in) {
     inputTypes.push('image');
   }
-
-  const pricing = PRICING_DEFAULTS[id] || DEFAULT_PRICING;
-  const maxTokens = MAX_TOKENS_DEFAULTS[id] || apiModel.context_length || 131072;
 
   const model = {
     id,
@@ -132,51 +101,26 @@ function transformApiModel(apiModel, existingModelsMap) {
     reasoning: apiModel.supports_reasoning || false,
     input: inputTypes,
     cost: {
-      input: pricing.input,
-      output: pricing.output,
-      cacheRead: pricing.cacheRead,
+      input: 0,
+      output: 0,
+      cacheRead: 0,
       cacheWrite: 0,
     },
     contextWindow: apiModel.context_length || 131072,
-    maxTokens,
+    maxTokens: 16384,
   };
 
-  // Add compat for reasoning models
-  if (model.reasoning) {
-    model.compat = {
-      thinkingFormat: 'zai',
-      maxTokensField: 'max_tokens',
-      supportsDeveloperRole: false,
-      supportsStore: false,
-    };
-  } else {
-    model.compat = {
-      maxTokensField: 'max_tokens',
-      supportsDeveloperRole: false,
-      supportsStore: false,
-    };
-  }
+  // Add compat settings
+  model.compat = {
+    maxTokensField: 'max_tokens',
+    supportsDeveloperRole: false,
+    supportsStore: false,
+  };
 
   return model;
 }
 
 function generateDisplayName(id) {
-  // Handle known names first
-  const KNOWN_NAMES = {
-    'kimi-k2.6': 'Kimi K2.6',
-    'kimi-k2.5': 'Kimi K2.5',
-    'kimi-k2-0905-preview': 'Kimi K2 0905 Preview',
-    'kimi-k2-0711-preview': 'Kimi K2 0711 Preview',
-    'kimi-k2-turbo-preview': 'Kimi K2 Turbo',
-    'kimi-k2-thinking': 'Kimi K2 Thinking',
-    'kimi-k2-thinking-turbo': 'Kimi K2 Thinking Turbo',
-    'moonshot-v1-8k': 'Moonshot V1 8K',
-    'moonshot-v1-32k': 'Moonshot V1 32K',
-    'moonshot-v1-128k': 'Moonshot V1 128K',
-  };
-
-  if (KNOWN_NAMES[id]) return KNOWN_NAMES[id];
-
   // Fallback: prettify the ID
   return id
     .replace(/-/g, ' ')
@@ -238,7 +182,7 @@ async function main() {
   try {
     const apiModels = await fetchModels();
 
-    // Load existing models.json for pricing/compat preservation
+    // Load existing models.json — source of truth for curated specs
     const existingModels = loadJson(MODELS_JSON_PATH);
     const existingModelsMap = {};
     for (const m of (Array.isArray(existingModels) ? existingModels : [])) {
@@ -286,7 +230,7 @@ async function main() {
     console.log(`Total models: ${models.length}`);
     console.log(`Reasoning models: ${models.filter(m => m.reasoning).length}`);
     console.log(`Vision models: ${models.filter(m => m.input.includes('image')).length}`);
-    if (added.length > 0) console.log(`New models: ${added.join(', ')}`);
+    if (added.length > 0) console.log(`New models: ${added.join(', ')} — curate models.json manually`);
     if (removed.length > 0) console.log(`Removed models: ${removed.join(', ')}`);
 
   } catch (error) {
