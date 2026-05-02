@@ -153,27 +153,6 @@
     }
   },
   {
-    "id": "moonshot-v1-128k",
-    "name": "Moonshot V1 128K",
-    "reasoning": false,
-    "input": [
-      "text"
-    ],
-    "cost": {
-      "input": 2,
-      "output": 5,
-      "cacheRead": 2,
-      "cacheWrite": 0
-    },
-    "contextWindow": 131072,
-    "maxTokens": 131072,
-    "compat": {
-      "maxTokensField": "max_tokens",
-      "supportsDeveloperRole": false,
-      "supportsStore": false
-    }
-  },
-  {
     "id": "moonshot-v1-128k-vision-preview",
     "name": "Moonshot V1 128k Vision Preview",
     "reasoning": false,
@@ -196,21 +175,20 @@
     }
   },
   {
-    "id": "moonshot-v1-32k-vision-preview",
-    "name": "Moonshot V1 32k Vision Preview",
+    "id": "moonshot-v1-128k",
+    "name": "Moonshot V1 128K",
     "reasoning": false,
     "input": [
-      "text",
-      "image"
+      "text"
     ],
     "cost": {
-      "input": 0.6,
-      "output": 3,
-      "cacheRead": 0.15,
+      "input": 2,
+      "output": 5,
+      "cacheRead": 2,
       "cacheWrite": 0
     },
-    "contextWindow": 32768,
-    "maxTokens": 32768,
+    "contextWindow": 131072,
+    "maxTokens": 131072,
     "compat": {
       "maxTokensField": "max_tokens",
       "supportsDeveloperRole": false,
@@ -228,6 +206,28 @@
       "input": 1,
       "output": 3,
       "cacheRead": 1,
+      "cacheWrite": 0
+    },
+    "contextWindow": 32768,
+    "maxTokens": 32768,
+    "compat": {
+      "maxTokensField": "max_tokens",
+      "supportsDeveloperRole": false,
+      "supportsStore": false
+    }
+  },
+  {
+    "id": "moonshot-v1-32k-vision-preview",
+    "name": "Moonshot V1 32k Vision Preview",
+    "reasoning": false,
+    "input": [
+      "text",
+      "image"
+    ],
+    "cost": {
+      "input": 0.6,
+      "output": 3,
+      "cacheRead": 0.15,
       "cacheWrite": 0
     },
     "contextWindow": 32768,
