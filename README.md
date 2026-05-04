@@ -62,13 +62,13 @@ Get your API key at [platform.kimi.ai/console/api-keys](https://platform.kimi.ai
 
 | Model | Context | Vision | Reasoning | Input $/M | Output $/M | Cache Read $/M |
 |-------|---------|--------|-----------|-----------|------------|----------------|
-| Kimi K2.6 | 262K | ✅ | ✅ | $0.95 | $4.00 | $0.16 |
-| Kimi K2.5 | 262K | ✅ | ✅ | $0.60 | $3.00 | $0.10 |
-| Kimi K2 Thinking Turbo | 262K | ❌ | ✅ | $1.15 | $8.00 | $0.15 |
-| Kimi K2 Thinking | 262K | ❌ | ✅ | $0.60 | $2.50 | $0.15 |
-| Kimi K2 Turbo | 262K | ❌ | ❌ | $1.15 | $8.00 | $0.15 |
-| Kimi K2 0905 Preview | 262K | ❌ | ❌ | $0.60 | $2.20 | $0.15 |
 | Kimi K2 0711 Preview | 131K | ❌ | ❌ | $0.55 | $2.20 | $0.30 |
+| Kimi K2 0905 Preview | 262K | ❌ | ❌ | $0.60 | $2.20 | $0.15 |
+| Kimi K2 Thinking | 262K | ❌ | ✅ | $0.60 | $2.50 | $0.15 |
+| Kimi K2 Thinking Turbo | 262K | ❌ | ✅ | $1.15 | $8.00 | $0.15 |
+| Kimi K2 Turbo | 262K | ❌ | ❌ | $1.15 | $8.00 | $0.15 |
+| Kimi K2.5 | 262K | ✅ | ✅ | $0.60 | $3.00 | $0.10 |
+| Kimi K2.6 | 262K | ✅ | ✅ | $0.95 | $4.00 | $0.16 |
 | Moonshot V1 128K | 131K | ❌ | ❌ | $2.00 | $5.00 | $2.00 |
 | Moonshot V1 128k Vision Preview | 131K | ✅ | ❌ | $0.60 | $3.00 | $0.15 |
 | Moonshot V1 32K | 33K | ❌ | ❌ | $1.00 | $3.00 | $1.00 |
