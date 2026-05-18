@@ -251,14 +251,8 @@ async function main() {
       transformApiModel(m, existingModelsMap)
     );
 
-    // Keep models from models.json that are NOT in the API response
-    // (e.g. deprecated but still usable models)
-    const apiIds = new Set(apiModels.map(m => m.id));
-    for (const existing of Object.values(existingModelsMap)) {
-      if (!apiIds.has(existing.id)) {
-        models.push(existing);
-      }
-    }
+    // Live API is authoritative — models absent from API are removed
+    // (embedded data is already used for enrichment in transformApiModel)
 
     // Sort: K2.6 first, then K2.5, then K2 family, then V1
     const FAMILY_ORDER = ['k2.6', 'k2.5', 'k2-thinking-turbo', 'k2-thinking', 'k2-turbo', 'k2-0905', 'k2-0711', 'v1-128', 'v1-32', 'v1-8'];
