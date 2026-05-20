@@ -20,7 +20,7 @@ A [pi](https://github.com/badlogic/pi-mono) extension that registers [Moonshot A
 Install directly from GitHub:
 
 ```bash
-pi install git:github.com/monotykamary/pi-moonshot-provider
+pi install https://github.com/monotykamary/pi-moonshot-provider
 ```
 
 Then set your API key and run pi:
