@@ -6,7 +6,8 @@
       "thinkingFormat": "zai",
       "maxTokensField": "max_tokens",
       "supportsDeveloperRole": false,
-      "supportsStore": false
+      "supportsStore": false,
+      "supportsReasoningEffort": true
     }
   },
   "kimi-k2.5": {
@@ -16,23 +17,28 @@
       "thinkingFormat": "zai",
       "maxTokensField": "max_tokens",
       "supportsDeveloperRole": false,
-      "supportsStore": false
+      "supportsStore": false,
+      "supportsReasoningEffort": true
     }
   },
   "kimi-k2-thinking": {
+    "reasoning": true,
     "compat": {
       "thinkingFormat": "zai",
       "maxTokensField": "max_tokens",
       "supportsDeveloperRole": false,
-      "supportsStore": false
+      "supportsStore": false,
+      "supportsReasoningEffort": true
     }
   },
   "kimi-k2-thinking-turbo": {
+    "reasoning": true,
     "compat": {
       "thinkingFormat": "zai",
       "maxTokensField": "max_tokens",
       "supportsDeveloperRole": false,
-      "supportsStore": false
+      "supportsStore": false,
+      "supportsReasoningEffort": true
     }
   }
 }
