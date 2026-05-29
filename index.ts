@@ -266,7 +266,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.registerProvider("moonshot", {
     baseUrl: BASE_URL,
-    apiKey: "MOONSHOT_API_KEY",
+    apiKey: "$MOONSHOT_API_KEY",
     api: "openai-completions",
     models: staleModels,
   });
@@ -280,7 +280,7 @@ export default function (pi: ExtensionAPI) {
         if (freshBase && !signal.aborted) {
           pi.registerProvider("moonshot", {
             baseUrl: BASE_URL,
-            apiKey: "MOONSHOT_API_KEY",
+            apiKey: "$MOONSHOT_API_KEY",
             api: "openai-completions",
             models: buildModels(freshBase, customModels, patches),
           });
