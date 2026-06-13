@@ -75,6 +75,7 @@ Get your API key at [platform.kimi.ai/console/api-keys](https://platform.kimi.ai
 |-------|---------|--------|-----------|-----------|------------|----------------|
 | Kimi K2.5 | 262K | ✅ | ✅ | $0.60 | $3.00 | $0.10 |
 | Kimi K2.6 | 262K | ✅ | ✅ | $0.95 | $4.00 | $0.16 |
+| Kimi K2.7 Code | 262K | ✅ | ✅ | Free | Free | Free |
 | Moonshot V1 128K | 131K | ❌ | ❌ | $2.00 | $5.00 | $2.00 |
 | Moonshot V1 128k Vision Preview | 131K | ✅ | ❌ | $0.60 | $3.00 | $0.15 |
 | Moonshot V1 32K | 33K | ❌ | ❌ | $1.00 | $3.00 | $1.00 |
