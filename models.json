@@ -197,6 +197,28 @@
     }
   },
   {
+    "id": "kimi-k2.7-code-highspeed",
+    "name": "Kimi K2.7 Code Highspeed",
+    "reasoning": true,
+    "input": [
+      "text",
+      "image"
+    ],
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0
+    },
+    "contextWindow": 262144,
+    "maxTokens": 16384,
+    "compat": {
+      "maxTokensField": "max_tokens",
+      "supportsDeveloperRole": false,
+      "supportsStore": false
+    }
+  },
+  {
     "id": "moonshot-v1-auto",
     "name": "Moonshot V1 Auto",
     "reasoning": false,
