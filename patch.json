@@ -1,44 +1,98 @@
 {
   "kimi-k2.6": {
-    "reasoning": true,
-    "input": ["text", "image"],
+    "api": "openai-completions",
+    "maxTokens": 262144,
     "compat": {
-      "thinkingFormat": "zai",
-      "maxTokensField": "max_tokens",
-      "supportsDeveloperRole": false,
       "supportsStore": false,
-      "supportsReasoningEffort": true
+      "supportsDeveloperRole": false,
+      "supportsReasoningEffort": false,
+      "maxTokensField": "max_tokens",
+      "supportsStrictMode": false,
+      "thinkingFormat": "deepseek"
     }
   },
   "kimi-k2.5": {
-    "reasoning": true,
-    "input": ["text", "image"],
+    "api": "openai-completions",
+    "maxTokens": 262144,
     "compat": {
-      "thinkingFormat": "zai",
-      "maxTokensField": "max_tokens",
-      "supportsDeveloperRole": false,
       "supportsStore": false,
-      "supportsReasoningEffort": true
+      "supportsDeveloperRole": false,
+      "supportsReasoningEffort": false,
+      "maxTokensField": "max_tokens",
+      "supportsStrictMode": false,
+      "thinkingFormat": "deepseek"
     }
   },
-  "kimi-k2-thinking": {
-    "reasoning": true,
+  "kimi-k2.7-code": {
+    "api": "openai-completions",
+    "cost": {
+      "input": 0.95,
+      "output": 4,
+      "cacheRead": 0.19,
+      "cacheWrite": 0
+    },
+    "maxTokens": 262144,
+    "thinkingLevelMap": {
+      "off": null
+    },
     "compat": {
-      "thinkingFormat": "zai",
-      "maxTokensField": "max_tokens",
-      "supportsDeveloperRole": false,
       "supportsStore": false,
-      "supportsReasoningEffort": true
+      "supportsDeveloperRole": false,
+      "supportsReasoningEffort": false,
+      "maxTokensField": "max_tokens",
+      "supportsStrictMode": false,
+      "thinkingFormat": "deepseek"
     }
   },
-  "kimi-k2-thinking-turbo": {
-    "reasoning": true,
+  "kimi-k2.7-code-highspeed": {
+    "name": "Kimi K2.7 Code HighSpeed",
+    "api": "openai-completions",
+    "cost": {
+      "input": 1.9,
+      "output": 8,
+      "cacheRead": 0.38,
+      "cacheWrite": 0
+    },
+    "maxTokens": 262144,
+    "thinkingLevelMap": {
+      "off": null
+    },
     "compat": {
-      "thinkingFormat": "zai",
-      "maxTokensField": "max_tokens",
-      "supportsDeveloperRole": false,
       "supportsStore": false,
-      "supportsReasoningEffort": true
+      "supportsDeveloperRole": false,
+      "supportsReasoningEffort": false,
+      "maxTokensField": "max_tokens",
+      "supportsStrictMode": false,
+      "thinkingFormat": "deepseek"
+    }
+  },
+  "kimi-k3": {
+    "api": "openai-completions",
+    "cost": {
+      "input": 3,
+      "output": 15,
+      "cacheRead": 0.3,
+      "cacheWrite": 0
+    },
+    "maxTokens": 131072,
+    "thinkingLevelMap": {
+      "off": null,
+      "minimal": null,
+      "low": "low",
+      "medium": null,
+      "high": "high",
+      "xhigh": null,
+      "max": "max"
+    },
+    "compat": {
+      "supportsStore": false,
+      "supportsDeveloperRole": false,
+      "supportsReasoningEffort": true,
+      "maxTokensField": "max_tokens",
+      "supportsStrictMode": false,
+      "thinkingFormat": "openai",
+      "requiresReasoningContentOnAssistantMessages": true,
+      "deferredToolsMode": "kimi"
     }
   }
 }
