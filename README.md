@@ -73,18 +73,10 @@ Get your API key at [platform.kimi.ai/console/api-keys](https://platform.kimi.ai
 
 | Model | Context | Vision | Reasoning | Input $/M | Output $/M | Cache Read $/M |
 |-------|---------|--------|-----------|-----------|------------|----------------|
-| Kimi K2.5 | 262K | ✅ | ✅ | $0.60 | $3.00 | $0.10 |
 | Kimi K2.6 | 262K | ✅ | ✅ | $0.95 | $4.00 | $0.16 |
 | Kimi K2.7 Code | 262K | ✅ | ✅ | $0.95 | $4.00 | $0.19 |
 | Kimi K2.7 Code HighSpeed | 262K | ✅ | ✅ | $1.90 | $8.00 | $0.38 |
 | Kimi K3 | 1.0M | ✅ | ✅ | $3.00 | $15.00 | $0.30 |
-| Moonshot V1 128K | 131K | ❌ | ❌ | $2.00 | $5.00 | $2.00 |
-| Moonshot V1 128k Vision Preview | 131K | ✅ | ❌ | $0.60 | $3.00 | $0.15 |
-| Moonshot V1 32K | 33K | ❌ | ❌ | $1.00 | $3.00 | $1.00 |
-| Moonshot V1 32k Vision Preview | 33K | ✅ | ❌ | $0.60 | $3.00 | $0.15 |
-| Moonshot V1 8K | 8K | ❌ | ❌ | $0.20 | $2.00 | $0.20 |
-| Moonshot V1 8k Vision Preview | 8K | ✅ | ❌ | $0.60 | $3.00 | $0.15 |
-| Moonshot V1 Auto | 131K | ❌ | ❌ | $0.60 | $3.00 | $0.15 |
 
 *Costs are per million tokens. Prices subject to change — check [platform.moonshot.ai](https://platform.moonshot.ai/docs/pricing/chat) for current pricing.*
 
