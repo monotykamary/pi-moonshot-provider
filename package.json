@@ -1,6 +1,6 @@
 {
   "name": "pi-moonshot-provider",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Moonshot AI provider extension for pi - Access Kimi K2.6, K2.5, K2 Thinking, and Moonshot V1 models through the Moonshot API",
   "type": "module",
   "main": "index.ts",
@@ -27,5 +27,8 @@
     "extensions": [
       "./index.ts"
     ]
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "0.85.1"
   }
 }
